@@ -1,3 +1,5 @@
+import cv2
+import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2 as cv
@@ -28,9 +30,6 @@ for i in range(num_patterns):
 
 patterns = np.array(patterns)
 print(patterns)
-
-#
-
 
 
 
