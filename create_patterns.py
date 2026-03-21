@@ -18,7 +18,7 @@ patterns = []
 num_patterns = int(num_patterns)
 
 for i in range(num_patterns):
-    # Get the i th digit of each element in grid = the color of the pixel in this pattern
+    # Get the i th digit of each element in grid = is the pixel on in this pattern
     pattern = (binary_grid >> i) & 1
     patterns.append(pattern)
 
