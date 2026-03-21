@@ -1,9 +1,4 @@
-import cv2
-import matplotlib
 import numpy as np
-import matplotlib.pyplot as plt
-import cv2 as cv
-import PIL
 from numpy.f2py.auxfuncs import throw_error
 
 GRID_SIZE = 512
