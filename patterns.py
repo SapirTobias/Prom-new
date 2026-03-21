@@ -2,18 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2 as cv
 import PIL
-
-def get_binary_digit(length, i):
-    mask = np.zeros(length)
-    mask[i] = 1
-    return mask
+from numpy.f2py.auxfuncs import throw_error
 
 grid_width = 4
 grid_height = 4
 
-grid = np.arange(grid_width * grid_height, dtype = int).reshape(grid_width, grid_height)
-convert_to_binary = np.vectorize(lambda x: format(x, 'b'))
-binary_grid = convert_to_binary(grid)
+grid = np.arange(grid_width * grid_height, dtype = int)
+binary_grid = np.array([format(x, 'b') for x in grid], dtype=int).reshape(grid_height, grid_width)
 
 print(binary_grid)
 
@@ -21,9 +16,21 @@ print(binary_grid)
 # And each bit determines the value of the pixel in a single pattern,
 # So this is the number of patterns we need
 num_patterns = np.log2(grid_height * grid_width)
+if int(num_patterns) != num_patterns:
+    throw_error("grid size must ensure the number of patterns is an integer")
 patterns = []
+num_patterns = int(num_patterns)
+
 for i in range(num_patterns):
-    pattern = np.vectorize(get_binary_digit)
+    # Get the i th digit of each element in grid = the color of the pixel in this pattern
+    pattern = (binary_grid >> i) & 1
+    patterns.append(pattern)
+
+patterns = np.array(patterns)
+print(patterns)
+
+#
+
 
 
 
