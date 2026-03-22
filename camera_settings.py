@@ -1,10 +1,10 @@
 import numpy as np
 import cv2
 import time
-import create_patterns
-FRAME_TIME = 3
-FRAME_COUNT = create_patterns.num_patterns
-GRID_SIZE = create_patterns.GRID_SIZE
+import config
+FRAME_TIME = config.FRAME_TIME
+GRID_SIZE = config.GRID_SIZE
+FRAME_COUNT = config.NUM_PATTERNS
 
 frames = []
 cap = cv2.VideoCapture(0) #defines the camera to use
@@ -15,17 +15,17 @@ while True:
 
      ret, frame = cap.read() #read the image
 
-     frame_64 = cv2.resize(frame, (GRID_SIZE, GRID_SIZE)) #resize
+     frame = cv2.resize(frame, (GRID_SIZE, GRID_SIZE))
 
      current_time = time.time()
-     if current_time - last_cap_time > FRAME_TIME:   #if FRAME_TIME seconds passed, update the last time and add the frame to frames
+     if int(current_time - last_cap_time) > FRAME_TIME:   #if FRAME_TIME seconds passed, update the last time and add the frame to frames
          last_cap_time = current_time
-         gray = cv2.cvtColor(frame_64, cv2.COLOR_BGR2GRAY)
+         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
          frames.append(gray)
          print(f"Captured frame #{len(frames)}")
          frame_cnt += 1
 
-     cv2.imshow('frame',frame_64)
+     cv2.imshow('frame',frame)
 
      if cv2.waitKey(1) & 0xFF == ord('q'):
          break
