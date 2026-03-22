@@ -13,15 +13,15 @@ last_show_time = 0
 
 # Set background to full black screen
 screen_width, screen_height = pyautogui.size()
-canvas = np.zeros((screen_height, screen_width, 3), np.uint8)
-cv2.namedWindow("Full Screen Patterns")
+canvas = np.zeros((screen_height, screen_width), np.uint8)
+cv2.namedWindow("Full Screen Patterns", cv2.WINDOW_NORMAL)
 cv2.setWindowProperty("Full Screen Patterns", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 # Show patterns
 for i, pattern in enumerate(greyscale_patterns):
     pattern_height, pattern_width = np.shape(pattern)
-    canvas[screen_height - pattern_height, screen_width - pattern_width] = pattern
-    cv2.imshow("Full Screen Patterns ", canvas)
+    canvas[screen_height - pattern_height:, screen_width - pattern_width:] = pattern
+    cv2.imshow("Full Screen Patterns", canvas)
     cv2.waitKey(delay=SHOW_TIME)
 
     # If pressed q
