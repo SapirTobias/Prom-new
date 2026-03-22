@@ -1,3 +1,6 @@
+import cv2
+import numpy as np
+
 import config
 import camera_settings as camera_settings
 import create_patterns as create_patterns
@@ -37,5 +40,12 @@ for i in range(GRID_SIZE):
 
 
 
+dual_image = np.zeros((GRID_SIZE, GRID_SIZE), dtype=np.uint8)
+
 for i in range(GRID_SIZE):
     for j in range(GRID_SIZE):
+        dual_image[i][j] = weighted_avg(match_mat[i][j])
+
+cv2.imshow("dual_image", dual_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
