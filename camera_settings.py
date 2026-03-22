@@ -14,7 +14,6 @@ frame_cnt = 0
 while True:
 
      ret, frame = cap.read() #read the image
-
      frame = cv2.resize(frame, (GRID_SIZE, GRID_SIZE))
 
      current_time = time.time()
