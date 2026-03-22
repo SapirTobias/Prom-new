@@ -1,28 +1,34 @@
-import time
-
-import camera_settings
+import config
 import create_patterns
 import numpy as np
 import cv2
-SHOW_TIME = camera_settings.FRAME_TIME
+import pyautogui
+SHOW_TIME = config.FRAME_TIME_MILLISEC
 
 patterns = np.array(create_patterns.patterns)
 num_patterns = len(patterns)
 greyscale_patterns = np.astype(patterns * 255, np.uint8)
 
-count = 0
 last_show_time = 0
-for i, pattern in enumerate(greyscale_patterns):
-     current_time = time.time()
-     # If SHOW_TIME seconds passed, show the next pattern
-     if int(current_time - last_show_time) > SHOW_TIME:
-         last_cap_time = current_time
-         print(pattern)
-         cv2.imshow(f"Pattern {i}", pattern)
 
-     # If pressed q
-     if cv2.waitKey(1) & 0xFF == ord('q'):
-         break
+# Set background to full black screen
+screen_width, screen_height = pyautogui.size()
+canvas = np.zeros((screen_height, screen_width, 3), np.uint8)
+cv2.namedWindow("Full Screen Patterns")
+cv2.setWindowProperty("Full Screen Patterns", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+# Show patterns
+for i, pattern in enumerate(greyscale_patterns):
+    pattern_height, pattern_width = np.shape(pattern)
+    canvas[screen_height - pattern_height, screen_width - pattern_width] = pattern
+    cv2.imshow("Full Screen Patterns ", canvas)
+    cv2.waitKey(delay=SHOW_TIME)
+
+    # If pressed q
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cv2.destroyAllWindows()
 
 
 

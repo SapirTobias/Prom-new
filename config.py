@@ -5,4 +5,5 @@ GRID_SIZE = 512
 # And each bit determines the value of the pixel in a single pattern,
 # So this is the number of patterns we need
 NUM_PATTERNS = int(np.log2(GRID_SIZE * GRID_SIZE))
-FRAME_TIME = 10
+FRAME_TIME_SEC = 3 # how long a frame is shown / captured
+FRAME_TIME_MILLISEC = 1000 * FRAME_TIME_SEC
