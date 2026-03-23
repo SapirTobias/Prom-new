@@ -27,10 +27,12 @@ def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
     # Show patterns
     for i, pattern in enumerate(patterns):
 
-        print(f"showing pattern: {i}")
+        print(f"showing pattern: {i} whose max pixel is {np.max(pattern)}")
         # Show pattern
         canvas[screen_height - pattern_height:, screen_width - pattern_width:] = pattern
         cv2.imshow("Full Screen Patterns", canvas)
+        frame_ready_event.set() # tell filmer that the frame is ready to be captured
+
         key = cv2.waitKey(1)
 
         # Stop all if clicked q
@@ -38,12 +40,11 @@ def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
             stop_event.set()
             break
 
-        time.sleep(DELAY) # continue showing each frame for 1 second
-
         # Handle synchronization
-        frame_ready_event.set() # tell filmer that the frame is ready to be captured
         next_frame_event.wait() # wait for the filmer to approve moving on to present next frame
         next_frame_event.clear() #  so at the next iteration it waits for the signal again
+
+        time.sleep(DELAY) # continue showing each frame for 1 second
 
     print("finished presenting patterns")
     cv2.destroyAllWindows()
@@ -84,14 +85,16 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
 
         # store frame as numpy array
         frames.append(gray.copy())
+        print(f"for frame {i} max is {(np.max(gray))}")
 
         # Handle synchronization
         next_frame_event.set() # tell presenter it can present the next frame
 
 
     cap.release()
+
     print("finished filming frames")
-    max_brightness_per_frame = np.max(frames, axis=(1,2)).reshape((frame_height, frame_width))
+    max_brightness_per_frame = np.max(frames, axis=(1,2))
     output_queue.put(max_brightness_per_frame)
 
 
@@ -117,7 +120,7 @@ if __name__ == '__main__':
     show_patterns_process.join()
     capture_frames_process.join()
 
-    dual_image = output_queue.get()
+    dual_image = output_queue.get().reshape((config.DUAL_GRID_SIZE, config.DUAL_GRID_SIZE))
     print(f"dual image: {dual_image}")
 
     #print(frames_result)
