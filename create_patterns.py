@@ -2,7 +2,7 @@ import numpy as np
 import config
 
 GRID_SIZE = config.GRID_SIZE
-NUM_PATTERNS = config.NUM_PATTERNS
+NUM_PATTERNS = config.NUM_FRAMES
 
 # Create grid with the unique binary code for each cell
 grid = np.arange(GRID_SIZE * GRID_SIZE, dtype = int)

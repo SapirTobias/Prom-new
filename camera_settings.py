@@ -2,9 +2,9 @@ import numpy as np
 import cv2
 import time
 import config
-FRAME_TIME = config.FRAME_TIME
+FRAME_TIME = config.FRAME_TIME_SEC
 GRID_SIZE = config.GRID_SIZE
-FRAME_COUNT = config.NUM_PATTERNS
+FRAME_COUNT = config.NUM_FRAMES
 
 frames = []
 cap = cv2.VideoCapture(0) #defines the camera to use
@@ -34,13 +34,13 @@ while True:
         break
 
 # print all of the frames
-#for i, frame in enumerate(frames):
-#     cv2.imshow("Frames Playback", frame)
+for i, frame in enumerate(frames):
+    cv2.imshow("Frames Playback", frame)
 
-#     print(f"Showing frame {i + 1}")
+    print(f"Showing frame {i + 1}")
 
- #    if cv2.waitKey(2000) & 0xFF == 27:
- #        break
+    if cv2.waitKey(2000) & 0xFF == 27:
+         break
 
 
 cap.release()

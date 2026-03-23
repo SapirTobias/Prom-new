@@ -10,7 +10,7 @@ BLACK_CONSTANT = 0
 WHITE_CONSTANT = 255
 GREY_CONSTANT = 123
 
-FRAME_COUNT = config.NUM_PATTERNS
+FRAME_COUNT = config.NUM_FRAMES
 
 patterns = create_patterns.patterns
 frames = camera_settings.frames
