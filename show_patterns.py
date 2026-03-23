@@ -1,11 +1,14 @@
 import config
-import create_patterns
 import numpy as np
 import cv2
 import pyautogui
+
+import create_single_block_patterns
+
 SHOW_TIME = config.FRAME_TIME_MILLISEC
 
-patterns = np.array(create_patterns.patterns)
+#patterns = np.array(create_patterns.patterns)
+patterns = np.array(create_single_pixel_patterns.patterns)
 num_patterns = len(patterns)
 greyscale_patterns = np.astype(patterns * 255, np.uint8)
 
@@ -22,11 +25,15 @@ for i, pattern in enumerate(greyscale_patterns):
     pattern_height, pattern_width = np.shape(pattern)
     canvas[screen_height - pattern_height:, screen_width - pattern_width:] = pattern
     cv2.imshow("Full Screen Patterns", canvas)
-    cv2.waitKey(delay=SHOW_TIME)
 
-    # If pressed q
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    key = cv2.waitKey(SHOW_TIME) & 0xFF
+
+    if key == ord('q'): # q closes all
+        cv2.destroyAllWindows()
         break
+
+    elif key == 13:  # Enter skips to next pattern
+        continue
 
 cv2.destroyAllWindows()
 
