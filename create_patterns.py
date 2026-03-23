@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.f2py.auxfuncs import throw_error
 import config
 
 GRID_SIZE = config.GRID_SIZE

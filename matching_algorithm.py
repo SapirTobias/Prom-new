@@ -10,11 +10,11 @@ BLACK_CONSTANT = 0
 WHITE_CONSTANT = 255
 GREY_CONSTANT = 123
 
-FRAME_COUNT = camera_settings.FRAME_COUNT
-
+FRAME_COUNT = config.NUM_PATTERNS
 
 patterns = create_patterns.patterns
 frames = camera_settings.frames
+
 #This function returns the weighted average between all of the frames in the current index
 def weighted_avg(index):
 
