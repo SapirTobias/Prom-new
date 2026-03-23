@@ -8,6 +8,6 @@ BLOCK_SIZE = int(GRID_SIZE / DUAL_GRID_SIZE)
 # And each bit determines the value of the pixel in a single pattern,
 # So this is the number of patterns we need
 NUM_PATTERNS = int(np.log2(GRID_SIZE * GRID_SIZE))
-FPS = 20 # 5 frames per second
+FPS = 20 # 20 frames per second
 FRAME_TIME_SEC = 1/ FPS
 FRAME_TIME_MILLISEC = int(1000 * FRAME_TIME_SEC)
