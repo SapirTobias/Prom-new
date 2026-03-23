@@ -8,7 +8,7 @@ NUM_FRAMES = DUAL_GRID_SIZE ** 2 # We take a photo of the wall for each block we
 FPS = 5 # frames per second
 FRAME_TIME_SEC = 1/ FPS
 FRAME_TIME_MILLISECOND = int(1000 * FRAME_TIME_SEC)
-DELAY = 0.1
+DELAY = 0.01
 
 
 WHITE_CONSTANT = 255
