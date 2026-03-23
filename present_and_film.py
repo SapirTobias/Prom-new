@@ -92,7 +92,7 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
     cap.release()
     print("finished filming frames")
     max_brightness_per_frame = np.max(frames, axis=(1,2)).reshape((frame_height, frame_width))
-    output_queue.put(max_brightness_per_frame) # send result frames back
+    output_queue.put(max_brightness_per_frame)
 
 
 
@@ -116,6 +116,7 @@ if __name__ == '__main__':
     # Ensures the main program waits for the processes to finish before exiting
     show_patterns_process.join()
     capture_frames_process.join()
+
     dual_image = output_queue.get()
     print(f"dual image: {dual_image}")
 

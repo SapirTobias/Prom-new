@@ -12,7 +12,7 @@ for i in range(0, GRID_SIZE, BLOCK_SIZE):
     for j in range(0, GRID_SIZE, BLOCK_SIZE):
         pattern = np.zeros((GRID_SIZE, GRID_SIZE), dtype=np.uint8)
         # light one block
-        pattern[i:i + BLOCK_SIZE, j:j + BLOCK_SIZE] = random.randint(WHITE_CONSTANT)
+        pattern[i:i + BLOCK_SIZE, j:j + BLOCK_SIZE] = random.randint(0, WHITE_CONSTANT)
 
         patterns.append(pattern)
 
