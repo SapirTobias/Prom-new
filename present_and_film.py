@@ -13,6 +13,44 @@ SHOW_TIME = config.FRAME_TIME_MILLISECOND
 DELAY = config.DELAY
 
 
+
+def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
+
+    screen_width, screen_height = pyautogui.size()
+    pattern_height, pattern_width = np.shape(patterns[0]) # All patterns have the same shape
+
+    # Set background to full black screen
+    canvas = np.zeros((screen_height, screen_width), np.uint8)
+    cv2.namedWindow("Full Screen Patterns", cv2.WINDOW_NORMAL)
+    cv2.setWindowProperty("Full Screen Patterns", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+    # Show patterns
+    for i, pattern in enumerate(patterns):
+
+        print(f"showing pattern: {i}")
+        # Show pattern
+        canvas[screen_height - pattern_height:, screen_width - pattern_width:] = pattern
+        cv2.imshow("Full Screen Patterns", canvas)
+        key = cv2.waitKey(1)
+
+        # Stop all if clicked q
+        if key == ord('q'):
+            stop_event.set()
+            break
+
+        time.sleep(DELAY) # continue showing each frame for 1 second
+
+        # Handle synchronization
+        frame_ready_event.set() # tell filmer that the frame is ready to be captured
+        next_frame_event.wait() # wait for the filmer to approve moving on to present next frame
+        next_frame_event.clear() #  so at the next iteration it waits for the signal again
+
+    print("finished presenting patterns")
+    cv2.destroyAllWindows()
+
+
+
+
 def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, frame_width, num_frames, output_queue, camera=0):
 
     # Get camera
@@ -53,44 +91,10 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
 
     cap.release()
     print("finished filming frames")
-    max_brightness_per_frame = np.max(frames, axis=0)
+    max_brightness_per_frame = np.max(frames, axis=(1,2)).reshape((frame_height, frame_width))
     output_queue.put(max_brightness_per_frame) # send result frames back
-    print("placed frames in queue")
 
 
-def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
-
-    screen_width, screen_height = pyautogui.size()
-    pattern_height, pattern_width = np.shape(patterns[0]) # All patterns have the same shape
-
-    # Set background to full black screen
-    canvas = np.zeros((screen_height, screen_width), np.uint8)
-    cv2.namedWindow("Full Screen Patterns", cv2.WINDOW_NORMAL)
-    cv2.setWindowProperty("Full Screen Patterns", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-
-    # Show patterns
-    for i, pattern in enumerate(patterns):
-
-        print(f"showing pattern: {i}")
-        # Show pattern
-        canvas[screen_height - pattern_height:, screen_width - pattern_width:] = pattern
-        cv2.imshow("Full Screen Patterns", canvas)
-        key = cv2.waitKey(1)
-
-        # Stop all if clicked q
-        if key == ord('q'):
-            stop_event.set()
-            break
-
-        time.sleep(DELAY) # continue showing each frame for 1 second
-
-        # Handle synchronization
-        frame_ready_event.set() # tell filmer that the frame is ready to be captured
-        next_frame_event.wait() # wait for the filmer to approve moving on to present next frame
-        next_frame_event.clear() #  so at the next iteration it waits for the signal again
-
-    print("finished presenting patterns")
-    cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
@@ -112,9 +116,8 @@ if __name__ == '__main__':
     # Ensures the main program waits for the processes to finish before exiting
     show_patterns_process.join()
     capture_frames_process.join()
-    print("finished waiting for processes to finish")
-    result = output_queue.get()
-    print(f"frames_result {result}")
+    dual_image = output_queue.get()
+    print(f"dual image: {dual_image}")
 
     #print(frames_result)
     print(f"total time: {time.time() - start_time} seconds")
