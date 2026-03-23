@@ -32,6 +32,7 @@ for i, pattern in enumerate(greyscale_patterns):
     cv2.imshow("Full Screen Patterns", canvas)
 
     key = cv2.waitKey(SHOW_TIME) & 0xFF
+    time.sleep(0.1)
 
     if key == ord('q'): # q closes all
         cv2.destroyAllWindows()
