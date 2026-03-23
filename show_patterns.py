@@ -7,7 +7,7 @@ import time
 start_time = time.time()
 import create_patterns
 
-SHOW_TIME = config.FRAME_TIME_MILLISEC
+SHOW_TIME = config.FRAME_TIME_MILLISECOND
 
 # patterns = np.array(create_patterns.patterns)
 patterns = np.array(create_patterns.patterns)
