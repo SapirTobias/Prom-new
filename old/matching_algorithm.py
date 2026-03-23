@@ -2,9 +2,8 @@ import cv2
 import numpy as np
 
 import config
-import camera_settings as camera_settings
-import create_patterns as create_patterns
-from camera_settings import GRID_SIZE
+from old import camera_settings as camera_settings, create_multiple_pixel_patterns as create_patterns
+from old.camera_settings import GRID_SIZE
 
 BLACK_CONSTANT = 0
 WHITE_CONSTANT = 255

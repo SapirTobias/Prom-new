@@ -3,12 +3,12 @@ import numpy as np
 import cv2
 import pyautogui
 
-import create_single_block_patterns
+import create_patterns
 
 SHOW_TIME = config.FRAME_TIME_MILLISEC
 
 #patterns = np.array(create_patterns.patterns)
-patterns = np.array(create_single_block_patterns.patterns)
+patterns = np.array(create_patterns.patterns)
 num_patterns = len(patterns)
 greyscale_patterns = np.astype(patterns * 255, np.uint8)
 
