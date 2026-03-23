@@ -12,6 +12,8 @@ def capture_frames(frame_height, frame_width, num_frames, fps, camera=0):
     delay = 1.0 / fps
     frames = []
     for i in range(num_frames):
+        print("Filmed frame #{}".format(i))
+
         start_time = time.time()
 
         ret, frame = cap.read()
@@ -32,3 +34,5 @@ def capture_frames(frame_height, frame_width, num_frames, fps, camera=0):
 
 frames_array = capture_frames(frame_height=config.DUAL_GRID_SIZE,
                               frame_width=config.DUAL_GRID_SIZE, num_frames=config.NUM_FRAMES, fps=config.FPS)
+
+print("finished grabbing frames")
