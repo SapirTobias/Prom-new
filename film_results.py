@@ -22,7 +22,9 @@ def capture_frames(frame_height, frame_width, num_frames, fps, camera=0):
             break
 
         frame = cv2.resize(frame, (frame_height, frame_width))
-        frames.append(frame.copy())  # store frame as numpy array (color BGR)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        frames.append(gray.copy())  # store frame as numpy array (color BGR)
 
         # wait to maintain FPS
         elapsed = time.time() - start_time
