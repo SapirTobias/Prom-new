@@ -20,7 +20,12 @@ def capture_frames(frame_height, frame_width, num_frames, fps, camera=0):
             break
 
         frame = cv2.resize(frame, (frame_height, frame_width))
-        frames.append(frame.copy())  # store frame as numpy array (color BGR)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        frames.append(gray.copy())  # store frame as numpy array (color BGR)
+        print(gray)
+        cv2.imshow('frame', gray)
+        print(f"Captured frame {i}")
 
         # wait to maintain FPS
         elapsed = time.time() - start_time
@@ -32,3 +37,12 @@ def capture_frames(frame_height, frame_width, num_frames, fps, camera=0):
 
 frames_array = capture_frames(frame_height=config.DUAL_GRID_SIZE,
                               frame_width=config.DUAL_GRID_SIZE, num_frames=config.NUM_FRAMES, fps=config.FPS)
+
+
+for i, frame in enumerate(frames_array):
+    cv2.imshow("Frames Playback", frame)
+
+    print(f"Showing frame {i + 1}")
+
+    if cv2.waitKey(2000) & 0xFF == 27:
+         break
