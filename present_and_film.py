@@ -10,8 +10,6 @@ import config
 import create_patterns
 
 SHOW_TIME = config.FRAME_TIME_MILLISECOND
-DELAY = config.DELAY
-
 
 
 def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
@@ -32,14 +30,13 @@ def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
         canvas[screen_height - pattern_height:, screen_width - pattern_width:] = pattern
         cv2.imshow("Full Screen Patterns", canvas)
         key = cv2.waitKey(1)
+        time.sleep(0.02)  # small fixed delay for screen refresh
 
         # Stop all if clicked q
         if key == ord('q'):
             frame_ready_event.set() # So the film frames stops waiting
             stop_event.set() # So the film frames will end
             break
-
-        time.sleep(DELAY)
 
         # Handle synchronization
         frame_ready_event.set() # tell filmer that the frame is ready to be captured
@@ -53,7 +50,7 @@ def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
 
 
 
-def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, frame_width, num_frames, output_queue, camera=0):
+def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, frame_width, num_frames, queue, camera=0):
 
     # Get camera
     cap = cv2.VideoCapture(camera)
@@ -68,7 +65,6 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
         # Handle synchronization
         if stop_event.is_set():
             break
-
         frame_ready_event.wait() # wait until presenter shows the frame
         frame_ready_event.clear() # so at the next iteration it waits for the signal again
 
@@ -83,7 +79,7 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
         # Change filmed frame to the desired size and greyscale
         frame = cv2.resize(frame, (frame_height, frame_width))
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
+        #cv2.imshow("frame", gray)
         # store frame as numpy array
         frames.append(gray.copy())
         print(f"for frame {i} max is {(np.max(gray))}")
@@ -101,7 +97,7 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
 
 
     max_brightness_per_frame = np.max(frames, axis=(1,2))
-    output_queue.put(max_brightness_per_frame)
+    queue.put(max_brightness_per_frame)
 
 
 
@@ -115,8 +111,8 @@ if __name__ == '__main__':
     show_patterns_process = Process(target=present_patterns,
                                     args=(frame_ready, next_frame, stop, create_patterns.patterns))
     capture_frames_process = Process(target=film_frames,
-                                     args=(frame_ready, next_frame,stop, config.DUAL_GRID_SIZE,
-                                           config.DUAL_GRID_SIZE, config.NUM_FRAMES, output_queue, 0))
+                                     args=(frame_ready, next_frame, stop, config.DUAL_GRID_SIZE,
+                                           config.DUAL_GRID_SIZE, config.NUM_FRAMES, output_queue, 1))
 
     # Starts the processes without blocking the continuation of the main code
     show_patterns_process.start()
