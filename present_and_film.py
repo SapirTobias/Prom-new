@@ -3,8 +3,10 @@ import cv2
 import pyautogui
 from multiprocessing import Process, Event, Queue
 import time
+import config
 
-from config import WHITE_CONSTANT
+WHITE_CONSTANT = config.WHITE_CONSTANT
+WEIGHT_POWER = config.WEIGT_POWER
 
 start_time = time.time()
 
@@ -25,6 +27,19 @@ def normalize_image(image):
         for j in range(width):
             new_image[i,j] = WHITE_CONSTANT * (image[i,j] - min_pixel) / (max_pixel - min_pixel)
     return new_image
+
+
+def weight_image(image):
+    height, width = image.shape
+    # we want the weights to increase the closer the pixel is to the brightest shade,
+    # therefore new_color = old_color ^ some_power
+    weighted_image = np.zeros((height, width))
+    for i in range(height):
+        for j in range(width):
+            # scale the image colors to [0, 1], then power the results,
+            # which will increase negativity and add more weight to brighter pixels
+            weighted_image[i,j] = int(((image[i,j] / 255) ** WEIGHT_POWER) * 255)
+    return weighted_image
 
 
 def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
@@ -58,8 +73,6 @@ def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
         next_frame_event.wait() # wait for the filmer to approve moving on to present next frame
         next_frame_event.clear() #  so at the next iteration it waits for the signal again
 
-
-    print("finished presenting patterns")
     cv2.destroyAllWindows()
 
 
@@ -91,26 +104,20 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
             print("Failed to grab frame")
             break
 
-        # Change filmed frame to the desired size and greyscale
+        # Change filmed frame to the desired size, and convert to greyscale and weight by brightness level
         frame = cv2.resize(frame, (frame_height, frame_width))
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        #cv2.imshow("frame", gray)
-        # store frame as numpy array
-        frames.append(gray.copy())
-        print(f"for frame {i} max is {(np.max(gray))}")
+        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = weight_image(frame)
+
+        frames.append(frame.copy())
 
         # Handle synchronization
         next_frame_event.set() # tell presenter it can present the next frame
 
 
     cap.release()
-
-    print("finished filming frames")
-
-
     max_brightness_per_frame = np.mean(frames, axis=(1,2))
     queue.put(max_brightness_per_frame)
-    print("after queue")
 
 
 if __name__ == '__main__':

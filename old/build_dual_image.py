@@ -1,6 +1,3 @@
-import numpy as np
-import time
-import config
 import film_results
 
 frames = film_results.frames_array

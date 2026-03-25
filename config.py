@@ -6,8 +6,9 @@ BLOCK_SIZE = int(GRID_SIZE / DUAL_GRID_SIZE) # Our "effective" pixel that we lig
 NUM_FRAMES = DUAL_GRID_SIZE ** 2 # We take a photo of the wall for each block we light to get the dual image
 i_RATIO = 3
 j_RATIO = 3
-
+WEIGHT_POWER = 2
 
 WHITE_CONSTANT = 255
 BLACK_CONSTANT = 0
 GREY_CONSTANT = 122
+
