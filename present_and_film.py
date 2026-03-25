@@ -4,14 +4,13 @@ import pyautogui
 from multiprocessing import Process, Event, Queue
 import time
 import config
+import create_patterns
 
 WHITE_CONSTANT = config.WHITE_CONSTANT
-WEIGHT_POWER = config.WEIGT_POWER
-
+WEIGHT_POWER = config.WEIGHT_POWER
+NORM_CONST = config.NORM_CONST
 start_time = time.time()
 
-import config
-import create_patterns
 
 def normalize_image(image):
     height, width = image.shape
@@ -28,6 +27,16 @@ def normalize_image(image):
             new_image[i,j] = WHITE_CONSTANT * (image[i,j] - min_pixel) / (max_pixel - min_pixel)
     return new_image
 
+def second_normalize(image):
+    height, width = image.shape
+
+    new_image = np.zeros((width, height))
+
+    for i in range(height):
+        for j in range(width):
+            new_image[i,j] = image[i,j] + (width - j) * NORM_CONST
+
+    return new_image
 
 def weight_image(image):
     height, width = image.shape
@@ -106,7 +115,7 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
 
         # Change filmed frame to the desired size, and convert to greyscale and weight by brightness level
         frame = cv2.resize(frame, (frame_height, frame_width)) # shape = (frame_height, frame_width, 3)
-        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         #frame = weight_image(frame)
 
         frames.append(frame.copy())
@@ -144,8 +153,10 @@ if __name__ == '__main__':
     capture_frames_process.join()
 
     new_dual = normalize_image(dual_image)
+    new_dual_image = second_normalize(new_dual)
     print("dual image:")
     print(new_dual)
+    print(new_dual_image)
 
     print(f"total time: {time.time() - start_time} seconds")
 
