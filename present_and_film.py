@@ -4,14 +4,13 @@ import pyautogui
 from multiprocessing import Process, Event, Queue
 import time
 import config
+import create_patterns
 
 WHITE_CONSTANT = config.WHITE_CONSTANT
-WEIGHT_POWER = config.WEIGT_POWER
-
+WEIGHT_POWER = config.WEIGHT_POWER
+NORM_CONST = config.NORM_CONST
 start_time = time.time()
 
-import config
-import create_patterns
 
 def normalize_image(image):
     height, width = image.shape
@@ -28,6 +27,16 @@ def normalize_image(image):
             new_image[i,j] = WHITE_CONSTANT * (image[i,j] - min_pixel) / (max_pixel - min_pixel)
     return new_image
 
+def second_normalize(image):
+    height, width = image.shape
+
+    new_image = np.zeros((width, height))
+
+    for i in range(height):
+        for j in range(width):
+            new_image[i,j] = image[i,j] + (width - j) * NORM_CONST
+
+    return new_image
 
 def weight_image(image):
     height, width = image.shape
@@ -143,8 +152,10 @@ if __name__ == '__main__':
     capture_frames_process.join()
 
     new_dual = normalize_image(dual_image)
+    new_dual_image = second_normalize(new_dual)
     print("dual image:")
     print(new_dual)
+    print(new_dual_image)
 
     print(f"total time: {time.time() - start_time} seconds")
 
