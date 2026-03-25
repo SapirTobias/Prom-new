@@ -7,8 +7,7 @@ NUM_FRAMES = DUAL_GRID_SIZE ** 2 # We take a photo of the wall for each block we
 i_RATIO = 3
 j_RATIO = 3
 
-NORM_CONST = 0.1
-
+NORM_CONST = 1
 WEIGHT_POWER = 2
 
 WHITE_CONSTANT = 255

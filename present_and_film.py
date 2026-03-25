@@ -115,8 +115,8 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
 
         # Change filmed frame to the desired size, and convert to greyscale and weight by brightness level
         frame = cv2.resize(frame, (frame_height, frame_width))
-        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        frame = weight_image(frame)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #frame = weight_image(frame)
 
         frames.append(frame.copy())
 
@@ -125,8 +125,8 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
 
 
     cap.release()
-    max_brightness_per_frame = np.mean(frames, axis=(1,2))
-    queue.put(max_brightness_per_frame)
+    brightness_per_frame = np.mean(frames, axis=(1,2))
+    queue.put(brightness_per_frame)
 
 
 if __name__ == '__main__':
