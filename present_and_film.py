@@ -6,7 +6,7 @@ import time
 import config
 
 WHITE_CONSTANT = config.WHITE_CONSTANT
-WEIGHT_POWER = config.WEIGT_POWER
+WEIGHT_POWER = config.WEIGHT_POWER
 
 start_time = time.time()
 
@@ -14,18 +14,19 @@ import config
 import create_patterns
 
 def normalize_image(image):
-    height, width = image.shape
-    max_pixel = np.max(image)
-    min_pixel = np.min(image)
-    new_image = np.zeros((width, height))
+    height, width, channels = image.shape
+    max_pixel_per_channel = np.max(image, axis=(0,1))
+    min_pixel_per_channel = np.min(image, axis=(0,1))
+    new_image = np.zeros((width, height, channels))
+    for k in range(channels):
+        # Avoid dividing by zero
+        if max_pixel_per_channel[k] == min_pixel_per_channel[k]:
+            new_image[::k] = max_pixel_per_channel[::k]
 
-    # Avoid dividing by zero
-    if max_pixel == min_pixel:
-        new_image[:] = max_pixel
+        for i in range(height):
+            for j in range(width):
+                new_image[i,j, k] = WHITE_CONSTANT * (image[i, j, k] - min_pixel_per_channel[k]) / (max_pixel_per_channel[k] - min_pixel_per_channel[k])
 
-    for i in range(height):
-        for j in range(width):
-            new_image[i,j] = WHITE_CONSTANT * (image[i,j] - min_pixel) / (max_pixel - min_pixel)
     return new_image
 
 
@@ -107,8 +108,12 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
         # Change filmed frame to the desired size, and convert to greyscale and weight by brightness level
         frame = cv2.resize(frame, (frame_height, frame_width)) # shape = (frame_height, frame_width, 3)
         #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        #frame = weight_image(frame)
 
+        #camera films in rgb and we cv2 uses as bgr
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
+        #frame = weight_image(frame)
+        cv2.imshow("frame", frame)
         frames.append(frame.copy())
 
         # Handle synchronization
