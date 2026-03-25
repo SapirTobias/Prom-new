@@ -4,12 +4,27 @@ import pyautogui
 from multiprocessing import Process, Event, Queue
 import time
 
+from config import WHITE_CONSTANT
+
 start_time = time.time()
 
 import config
 import create_patterns
 
-SHOW_TIME = config.FRAME_TIME_MILLISECOND
+def normalize_image(image):
+    height, width = image.shape
+    max_pixel = np.max(image)
+    min_pixel = np.min(image)
+    new_image = np.zeros((width, height))
+
+    # Avoid dividing by zero
+    if max_pixel == min_pixel:
+        new_image[:] = max_pixel
+
+    for i in range(height):
+        for j in range(width):
+            new_image[i,j] = WHITE_CONSTANT * (image[i,j] - min_pixel) / (max_pixel - min_pixel)
+    return new_image
 
 
 def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
@@ -91,15 +106,11 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
     cap.release()
 
     print("finished filming frames")
-    for f in frames:
-        print(f)
-        print("")
 
 
-    max_brightness_per_frame = np.max(frames, axis=(1,2))
+    max_brightness_per_frame = np.mean(frames, axis=(1,2))
     queue.put(max_brightness_per_frame)
-
-
+    print("after queue")
 
 
 if __name__ == '__main__':
@@ -112,21 +123,22 @@ if __name__ == '__main__':
                                     args=(frame_ready, next_frame, stop, create_patterns.patterns))
     capture_frames_process = Process(target=film_frames,
                                      args=(frame_ready, next_frame, stop, config.DUAL_GRID_SIZE,
-                                           config.DUAL_GRID_SIZE, config.NUM_FRAMES, output_queue, 1))
+                                           config.DUAL_GRID_SIZE, config.NUM_FRAMES, output_queue,1))
 
     # Starts the processes without blocking the continuation of the main code
     show_patterns_process.start()
     capture_frames_process.start()
 
+    dual_image = output_queue.get().reshape((config.DUAL_GRID_SIZE, config.DUAL_GRID_SIZE))
+
     # Ensures the main program waits for the processes to finish before exiting
     show_patterns_process.join()
     capture_frames_process.join()
 
-    dual_image = output_queue.get().reshape((config.DUAL_GRID_SIZE, config.DUAL_GRID_SIZE))
+    new_dual = normalize_image(dual_image)
     print("dual image:")
-    print(dual_image)
+    print(new_dual)
 
-    #print(frames_result)
     print(f"total time: {time.time() - start_time} seconds")
 
 

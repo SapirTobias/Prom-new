@@ -1,13 +1,11 @@
 import numpy as np
 
-GRID_SIZE = 256 # Grid that is scaled to the size of the object when lighted
+GRID_SIZE = 512 # Grid that is scaled to the size of the object when lighted
 DUAL_GRID_SIZE = 64
 BLOCK_SIZE = int(GRID_SIZE / DUAL_GRID_SIZE) # Our "effective" pixel that we light each time
 NUM_FRAMES = DUAL_GRID_SIZE ** 2 # We take a photo of the wall for each block we light to get the dual image
-
-FPS = 5 # frames per second
-FRAME_TIME_SEC = 1/ FPS
-FRAME_TIME_MILLISECOND = int(1000 * FRAME_TIME_SEC)
+i_RATIO = 3
+j_RATIO = 3
 
 
 WHITE_CONSTANT = 255

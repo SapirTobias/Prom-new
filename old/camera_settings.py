@@ -2,12 +2,12 @@ import numpy as np
 import cv2
 import time
 import config
-FRAME_TIME = config.FRAME_TIME_SEC
-GRID_SIZE = config.GRID_SIZE
-FRAME_COUNT = config.NUM_FRAMES
+FRAME_TIME = 0.001#config.FRAME_TIME_SEC
+GRID_SIZE = 64#config.GRID_SIZE
+FRAME_COUNT = 5#config.NUM_FRAMES
 
 frames = []
-cap = cv2.VideoCapture(0) #defines the camera to use
+cap = cv2.VideoCapture(2) #defines the camera to use
 
 last_cap_time = 0
 frame_cnt = 0
