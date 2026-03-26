@@ -11,44 +11,48 @@ WEIGHT_POWER = config.WEIGHT_POWER
 NORM_CONST = config.NORM_CONST
 start_time = time.time()
 
-
-def normalize_image(image):
+# Scale to full grayscale range
+def scale_image(image):
     height, width = image.shape
     max_pixel = np.max(image)
     min_pixel = np.min(image)
     new_image = np.zeros((width, height))
 
     # Avoid dividing by zero
-    if max_pixel == min_pixel:
-        new_image[:] = max_pixel
+    if max_pixel - min_pixel == 0:
+        return np.zeros_like(image)
 
     for i in range(height):
         for j in range(width):
             new_image[i,j] = WHITE_CONSTANT * (image[i,j] - min_pixel) / (max_pixel - min_pixel)
     return new_image
 
+
 def second_normalize(image):
     height, width = image.shape
 
     new_image = np.zeros((width, height))
-
     for i in range(height):
         for j in range(width):
             new_image[i,j] = image[i,j] + (width - j) * NORM_CONST
 
     return new_image
 
-def weight_image(image):
+
+def image_weights(image):
     height, width = image.shape
-    # we want the weights to increase the closer the pixel is to the brightest shade,
-    # therefore new_color = old_color ^ some_power
-    weighted_image = np.zeros((height, width))
-    for i in range(height):
-        for j in range(width):
-            # scale the image colors to [0, 1], then power the results,
-            # which will increase negativity and add more weight to brighter pixels
-            weighted_image[i,j] = int(((image[i,j] / 255) ** WEIGHT_POWER) * 255)
-    return weighted_image
+
+    max_pixel = np.max(image)
+    y0, x0 = np.unravel_index(np.argmax(image), image.shape)
+
+    y, x = np.meshgrid(np.arange(height), np.arange(width), indexing='ij')
+    dist = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
+
+    sigma = None
+    if sigma is None:
+        sigma = width / 4
+    weights = np.exp(-dist ** 2 / (2 * sigma ** 2))
+    return weights
 
 
 def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
@@ -94,7 +98,7 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
     if not cap.isOpened():
         raise Exception("Could not open camera")
 
-    frames = []
+    mean_brightnesses = []
 
     # Film frames
     for i in range(num_frames):
@@ -116,17 +120,22 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
         # Change filmed frame to the desired size, and convert to greyscale and weight by brightness level
         frame = cv2.resize(frame, (frame_height, frame_width))
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        #frame = weight_image(frame)
+        weights = image_weights(frame)
+        # Check before averaging
+        if np.sum(weights) > 0:
+            mean_brightness = np.average(frame, weights=weights)
+        else:
+            mean_brightness = np.mean(frame)  # Fallback to a normal average
 
-        frames.append(frame.copy())
+
+        mean_brightnesses.append(mean_brightness)
 
         # Handle synchronization
         next_frame_event.set() # tell presenter it can present the next frame
 
 
     cap.release()
-    brightness_per_frame = np.mean(frames, axis=(1,2))
-    queue.put(brightness_per_frame)
+    queue.put(np.array(mean_brightnesses))
 
 
 if __name__ == '__main__':
@@ -151,7 +160,7 @@ if __name__ == '__main__':
     show_patterns_process.join()
     capture_frames_process.join()
 
-    new_dual = normalize_image(dual_image)
+    new_dual = scale_image(dual_image)
     new_dual_image = second_normalize(new_dual)
     print("dual image:")
     print(new_dual)
