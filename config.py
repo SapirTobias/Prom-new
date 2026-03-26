@@ -4,8 +4,8 @@ GRID_SIZE = 256 # Grid that is scaled to the size of the object when lighted
 DUAL_GRID_SIZE = 32
 BLOCK_SIZE = int(GRID_SIZE / DUAL_GRID_SIZE) # Our "effective" pixel that we light each time
 NUM_FRAMES = DUAL_GRID_SIZE ** 2# We take a photo of the wall for each block we light to get the dual image
-i_RATIO = 2
-j_RATIO = 2
+i_RATIO = 4
+j_RATIO = 4
 
 NORM_CONST = 1
 WEIGHT_POWER = 2

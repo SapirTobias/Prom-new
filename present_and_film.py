@@ -105,17 +105,17 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
     if not cap.isOpened():
         raise Exception("Could not open camera")
 
-    #for i in range(5):
-     #   ret, wall = cap.read()
+    for i in range(5):
+        ret, wall = cap.read()
 
     # Change filmed frame to the desired size, and convert to greyscale and weight by brightness level
-    #wall = cv2.resize(wall, (frame_height, frame_width))  # shape = (frame_height, frame_width, 3)
+    wall = cv2.resize(wall, (frame_height, frame_width))  # shape = (frame_height, frame_width, 3)
 
     # camera films in rgb and we cv2 uses as bgr
-    #wall = cv2.cvtColor(wall, cv2.COLOR_RGB2BGR)
+    wall = cv2.cvtColor(wall, cv2.COLOR_RGB2BGR)
 
     # After filming wall, Handle synchronization - return to presenting the next patterns
-    #next_frame_event.set()
+    next_frame_event.set()
 
     mean_brightness_list = []
     # Film frames
@@ -139,7 +139,7 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
         frame = cv2.resize(frame, (frame_height, frame_width))
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-        #frame = cv2.subtract(frame, wall)
+        frame = cv2.subtract(frame, wall)
 
         weights = image_weights(frame)
         # Check before averaging
