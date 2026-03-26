@@ -11,7 +11,8 @@ BLOCK_SIZE = config.BLOCK_SIZE
 i_RATIO = config.i_RATIO
 j_RATIO = config.j_RATIO
 patterns = []
-
+pattern = np.zeros((GRID_SIZE, GRID_SIZE), dtype=np.uint8)
+#patterns.append(pattern)
 for i in range(0, GRID_SIZE, BLOCK_SIZE):
     for j in range(0, GRID_SIZE, BLOCK_SIZE):
         pattern = np.zeros((GRID_SIZE, GRID_SIZE), dtype=np.uint8)

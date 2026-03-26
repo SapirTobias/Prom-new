@@ -11,58 +11,49 @@ WEIGHT_POWER = config.WEIGHT_POWER
 NORM_CONST = config.NORM_CONST
 start_time = time.time()
 
+# Scale to full grayscale range
+def scale_image(image):
+    height, width = image.shape
+    max_pixel = np.max(image)
+    min_pixel = np.min(image)
+    new_image = np.zeros((width, height))
 
-def normalize_image(image):
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    # Avoid dividing by zero
+    if max_pixel - min_pixel == 0:
+        return np.zeros_like(image)
 
-    v = hsv[:, :, 2].astype(np.float32)
-    v_min, v_max = v.min(), v.max()
+    for i in range(height):
+        for j in range(width):
+            new_image[i,j] = WHITE_CONSTANT * (image[i,j] - min_pixel) / (max_pixel - min_pixel)
+    return new_image
 
-    if v_max == v_min:
-        return image.copy()
-    v = WHITE_CONSTANT * (v - v_min) / (v_max - v_min)
-    hsv[:, :, 2] = v.astype(np.uint8)
-    return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
 def second_normalize(image):
-    height, width, channels = image.shape
+    height, width = image.shape
 
-    new_image = np.zeros((height, width, channels))
-    images = []
-    for n in range(5):
-        new_image = np.zeros((height, width, channels))
-        for i in range(height):
-            for j in range(width):
-                for k in range(3):
-                    new_image[i,j,k] = int(image[i,j,k] + (width - j) * (n/8.00))
-        images.append(new_image)
-    return images
+    new_image = np.zeros((width, height))
+    for i in range(height):
+        for j in range(width):
+            new_image[i,j] = image[i,j] + (width - j) * NORM_CONST
+
+    return new_image
 
 
-def image_weights(frame, sigma=None):
-    # Ensure frame is float to prevent overflow during arithmetic
-    frame_float = frame.astype(float)
+def image_weights(image):
+    height, width = image.shape
 
-    # Step 1: Calculate brightness
-    # (Coefficients suggest the input is in BGR format, standard for OpenCV)
-    brightness = 0.114 * frame_float[:, :, 0] + 0.587 * frame_float[:, :, 1] + 0.299 * frame_float[:, :, 2]
+    max_pixel = np.max(image)
+    y0, x0 = np.unravel_index(np.argmax(image), image.shape)
 
-    # Step 2: Find the brightest pixel coordinates (row, col)
-    y0, x0 = np.unravel_index(np.argmax(brightness), brightness.shape)
-
-    # Step 3: Create distance map
-    height, width = brightness.shape
-    # indexing='ij' ensures 'y' maps to rows (height) and 'x' maps to cols (width)
     y, x = np.meshgrid(np.arange(height), np.arange(width), indexing='ij')
     dist = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
 
-    # Step 4: Calculate Gaussian weights
+    sigma = None
     if sigma is None:
-        sigma = width / 4.0
-
+        sigma = width / 4
     weights = np.exp(-dist ** 2 / (2 * sigma ** 2))
-
     return weights
+
 
 def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
 
@@ -98,6 +89,8 @@ def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
     cv2.destroyAllWindows()
 
 
+
+
 def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, frame_width, num_frames, queue, camera=0):
 
     # Get camera
@@ -105,19 +98,8 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
     if not cap.isOpened():
         raise Exception("Could not open camera")
 
-    #for i in range(5):
-     #   ret, wall = cap.read()
+    mean_brightnesses = []
 
-    # Change filmed frame to the desired size, and convert to greyscale and weight by brightness level
-    #wall = cv2.resize(wall, (frame_height, frame_width))  # shape = (frame_height, frame_width, 3)
-
-    # camera films in rgb and we cv2 uses as bgr
-    #wall = cv2.cvtColor(wall, cv2.COLOR_RGB2BGR)
-
-    # After filming wall, Handle synchronization - return to presenting the next patterns
-    #next_frame_event.set()
-
-    mean_brightness_list = []
     # Film frames
     for i in range(num_frames):
 
@@ -137,25 +119,26 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
 
         # Change filmed frame to the desired size, and convert to greyscale and weight by brightness level
         frame = cv2.resize(frame, (frame_height, frame_width))
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-
-        #frame = cv2.subtract(frame, wall)
-
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         weights = image_weights(frame)
+        #height, width = frame.shape
+        #weights = np.full((height, width), 1)
         # Check before averaging
         if np.sum(weights) > 0:
-            # Result is an array of 3 values: [blue_mean, green_mean, red_mean]
-            frame_mean = np.average(frame, weights=weights, axis=(0,1))
+            mean_brightness = np.average(frame, weights=weights)
         else:
-            frame_mean = np.mean(frame, axis=(0, 1))
+            mean_brightness = np.mean(frame)  # Fallback to a normal average
 
-        mean_brightness_list.append(frame_mean)
+
+        mean_brightnesses.append(mean_brightness)
 
         # Handle synchronization
-        next_frame_event.set()
+        next_frame_event.set() # tell presenter it can present the next frame
+
 
     cap.release()
-    queue.put(np.array(mean_brightness_list))
+    queue.put(np.array(mean_brightnesses))
+
 
 if __name__ == '__main__':
     frame_ready = Event()
@@ -173,20 +156,16 @@ if __name__ == '__main__':
     show_patterns_process.start()
     capture_frames_process.start()
 
-    dual_image = output_queue.get().reshape((config.DUAL_GRID_SIZE, config.DUAL_GRID_SIZE, 3)).astype(np.uint8)
+    dual_image = output_queue.get().reshape((config.DUAL_GRID_SIZE, config.DUAL_GRID_SIZE))
 
     # Ensures the main program waits for the processes to finish before exiting
     show_patterns_process.join()
     capture_frames_process.join()
 
-    #new_dual = normalize_greyscale_image(cv2.cvtColor(dual_image, cv2.COLOR_BGR2GRAY))
-    new_dual = normalize_image(dual_image)
+    new_dual = scale_image(dual_image)
     new_dual_image = second_normalize(new_dual)
-
     print("dual image:")
     print(new_dual)
-    #print(new_dual_image)
+    print(new_dual_image)
 
     print(f"total time: {time.time() - start_time} seconds")
-
-
