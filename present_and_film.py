@@ -11,20 +11,20 @@ WEIGHT_POWER = config.WEIGHT_POWER
 NORM_CONST = config.NORM_CONST
 start_time = time.time()
 
-
 def normalize_image(image):
-    height, width = image.shape
-    max_pixel = np.max(image)
-    min_pixel = np.min(image)
-    new_image = np.zeros((width, height))
+    height, width, channels = image.shape
+    max_pixel_per_channel = np.max(image, axis=(0,1))
+    min_pixel_per_channel = np.min(image, axis=(0,1))
+    new_image = np.zeros((width, height, channels))
+    for k in range(channels):
+        # Avoid dividing by zero
+        if max_pixel_per_channel[k] == min_pixel_per_channel[k]:
+            new_image[::k] = max_pixel_per_channel[::k]
 
-    # Avoid dividing by zero
-    if max_pixel == min_pixel:
-        new_image[:] = max_pixel
+        for i in range(height):
+            for j in range(width):
+                new_image[i,j, k] = WHITE_CONSTANT * (image[i, j, k] - min_pixel_per_channel[k]) / (max_pixel_per_channel[k] - min_pixel_per_channel[k])
 
-    for i in range(height):
-        for j in range(width):
-            new_image[i,j] = WHITE_CONSTANT * (image[i,j] - min_pixel) / (max_pixel - min_pixel)
     return new_image
 
 def second_normalize(image):
@@ -40,19 +40,6 @@ def second_normalize(image):
         images.append(new_image)
 
     return images
-
-def weight_image(image):
-    height, width = image.shape
-    # we want the weights to increase the closer the pixel is to the brightest shade,
-    # therefore new_color = old_color ^ some_power
-    weighted_image = np.zeros((height, width))
-    for i in range(height):
-        for j in range(width):
-            # scale the image colors to [0, 1], then power the results,
-            # which will increase negativity and add more weight to brighter pixels
-            weighted_image[i,j] = int(((image[i,j] / 255) ** WEIGHT_POWER) * 255)
-    return weighted_image
-
 
 def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
 
@@ -118,8 +105,10 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
 
         # Change filmed frame to the desired size, and convert to greyscale and weight by brightness level
         frame = cv2.resize(frame, (frame_height, frame_width)) # shape = (frame_height, frame_width, 3)
+
+        #camera films in rgb and we cv2 uses as bgr
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        #frame = weight_image(frame)
+
 
         frames.append(frame.copy())
 
