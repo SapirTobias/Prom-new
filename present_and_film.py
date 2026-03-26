@@ -31,12 +31,15 @@ def second_normalize(image):
     height, width = image.shape
 
     new_image = np.zeros((width, height))
+    images = []
+    for n in range(5):
+        for i in range(height):
+            for j in range(width):
+                for k in range(3):
+                    new_image[i,j,k] = image[i,j,k] + (width - j) * (n/10)
+        images.append(new_image)
 
-    for i in range(height):
-        for j in range(width):
-            new_image[i,j] = image[i,j] + (width - j) * NORM_CONST
-
-    return new_image
+    return images
 
 def weight_image(image):
     height, width = image.shape
