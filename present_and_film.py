@@ -27,16 +27,32 @@ def normalize_image(image):
 
     return new_image
 
+def normalize_greyscale_image(image):
+    height, width = image.shape
+    max_pixel = np.max(image)
+    min_pixel = np.min(image)
+    new_image = np.zeros((height, width))
+    # Avoid dividing by zero
+    if max_pixel == min_pixel:
+        new_image[:] = max_pixel
+
+    for i in range(height):
+        for j in range(width):
+            new_image[i,j] = WHITE_CONSTANT * (image[i, j] - min_pixel) / (max_pixel - min_pixel)
+
+    return new_image
+
 def second_normalize(image):
     height, width, channels = image.shape
 
-    new_image = np.zeros((width, height, channels))
+    new_image = np.zeros((height, width, channels))
     images = []
     for n in range(5):
+        new_image = np.zeros((height, width, channels))
         for i in range(height):
             for j in range(width):
                 for k in range(3):
-                    new_image[i,j,k] = image[i,j,k] + (width - j) * (n/10)
+                    new_image[i,j,k] = int(image[i,j,k] + (width - j) * (n/8.00))
         images.append(new_image)
     return images
 
@@ -162,17 +178,19 @@ if __name__ == '__main__':
     show_patterns_process.start()
     capture_frames_process.start()
 
-    dual_image = output_queue.get().reshape((config.DUAL_GRID_SIZE, config.DUAL_GRID_SIZE, 3))
+    dual_image = output_queue.get().reshape((config.DUAL_GRID_SIZE, config.DUAL_GRID_SIZE, 3)).astype(np.uint8)
 
     # Ensures the main program waits for the processes to finish before exiting
     show_patterns_process.join()
     capture_frames_process.join()
 
-    new_dual = normalize_image(dual_image)
-    new_dual_image = second_normalize(new_dual)
+    new_dual = normalize_greyscale_image(cv2.cvtColor(dual_image, cv2.COLOR_BGR2GRAY))
+    #new_dual = normalize_image(dual_image)
+    #new_dual_image = second_normalize(new_dual)
+
     print("dual image:")
     print(new_dual)
-    print(new_dual_image)
+    #print(new_dual_image)
 
     print(f"total time: {time.time() - start_time} seconds")
 
