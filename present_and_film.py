@@ -28,9 +28,9 @@ def normalize_image(image):
     return new_image
 
 def second_normalize(image):
-    height, width = image.shape
+    height, width, channels = image.shape
 
-    new_image = np.zeros((width, height))
+    new_image = np.zeros((width, height, channels))
     images = []
     for n in range(5):
         for i in range(height):
@@ -41,21 +41,30 @@ def second_normalize(image):
     return images
 
 
-def image_weights(image):
-    height, width = image.shape
+def image_weights(frame, sigma=None):
+    # Ensure frame is float to prevent overflow during arithmetic
+    frame_float = frame.astype(float)
 
-    max_pixel = np.max(image)
-    y0, x0 = np.unravel_index(np.argmax(image), image.shape)
+    # Step 1: Calculate brightness
+    # (Coefficients suggest the input is in BGR format, standard for OpenCV)
+    brightness = 0.114 * frame_float[:, :, 0] + 0.587 * frame_float[:, :, 1] + 0.299 * frame_float[:, :, 2]
 
+    # Step 2: Find the brightest pixel coordinates (row, col)
+    y0, x0 = np.unravel_index(np.argmax(brightness), brightness.shape)
+
+    # Step 3: Create distance map
+    height, width = brightness.shape
+    # indexing='ij' ensures 'y' maps to rows (height) and 'x' maps to cols (width)
     y, x = np.meshgrid(np.arange(height), np.arange(width), indexing='ij')
     dist = np.sqrt((x - x0) ** 2 + (y - y0) ** 2)
 
-    sigma = None
+    # Step 4: Calculate Gaussian weights
     if sigma is None:
-        sigma = width / 4
-    weights = np.exp(-dist ** 2 / (2 * sigma ** 2))
-    return weights
+        sigma = width / 4.0
 
+    weights = np.exp(-dist ** 2 / (2 * sigma ** 2))
+
+    return weights
 
 def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
 
@@ -98,7 +107,7 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
     if not cap.isOpened():
         raise Exception("Could not open camera")
 
-    mean_brightnesses = []
+    mean_brightness_list = []
 
     # Film frames
     for i in range(num_frames):
@@ -124,17 +133,18 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
         weights = image_weights(frame)
         # Check before averaging
         if np.sum(weights) > 0:
-            mean_brightness = np.average(frame, weights=weights)
+            # Result is an array of 3 values: [blue_mean, green_mean, red_mean]
+            frame_mean = np.average(frame, weights=weights, axis=(0, 1))
         else:
-            mean_brightness = np.mean(frame)  # Fallback to a normal average
+            frame_mean = np.mean(frame, axis=(0, 1))
+
+        mean_brightness_list.append(frame_mean)
 
         # Handle synchronization
-        next_frame_event.set() # tell presenter it can present the next frame
-
+        next_frame_event.set()
 
     cap.release()
-    queue.put(np.array(mean_brightnesses))
-
+    queue.put(np.array(mean_brightness_list))
 
 if __name__ == '__main__':
     frame_ready = Event()
