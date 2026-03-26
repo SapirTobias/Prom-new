@@ -11,32 +11,34 @@ WEIGHT_POWER = config.WEIGHT_POWER
 NORM_CONST = config.NORM_CONST
 start_time = time.time()
 
-# Scale to full grayscale range
-def scale_image(image):
-    height, width = image.shape
-    max_pixel = np.max(image)
-    min_pixel = np.min(image)
-    new_image = np.zeros((width, height))
+def normalize_image(image):
+    height, width, channels = image.shape
+    max_pixel_per_channel = np.max(image, axis=(0,1))
+    min_pixel_per_channel = np.min(image, axis=(0,1))
+    new_image = np.zeros((width, height, channels))
+    for k in range(channels):
+        # Avoid dividing by zero
+        if max_pixel_per_channel[k] == min_pixel_per_channel[k]:
+            new_image[::k] = max_pixel_per_channel[::k]
 
-    # Avoid dividing by zero
-    if max_pixel - min_pixel == 0:
-        return np.zeros_like(image)
+        for i in range(height):
+            for j in range(width):
+                new_image[i,j, k] = WHITE_CONSTANT * (image[i, j, k] - min_pixel_per_channel[k]) / (max_pixel_per_channel[k] - min_pixel_per_channel[k])
 
-    for i in range(height):
-        for j in range(width):
-            new_image[i,j] = WHITE_CONSTANT * (image[i,j] - min_pixel) / (max_pixel - min_pixel)
     return new_image
-
 
 def second_normalize(image):
     height, width = image.shape
 
     new_image = np.zeros((width, height))
-    for i in range(height):
-        for j in range(width):
-            new_image[i,j] = image[i,j] + (width - j) * NORM_CONST
-
-    return new_image
+    images = []
+    for n in range(5):
+        for i in range(height):
+            for j in range(width):
+                for k in range(3):
+                    new_image[i,j,k] = image[i,j,k] + (width - j) * (n/10)
+        images.append(new_image)
+    return images
 
 
 def image_weights(image):
@@ -53,7 +55,6 @@ def image_weights(image):
         sigma = width / 4
     weights = np.exp(-dist ** 2 / (2 * sigma ** 2))
     return weights
-
 
 def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
 
@@ -119,16 +120,14 @@ def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, f
 
         # Change filmed frame to the desired size, and convert to greyscale and weight by brightness level
         frame = cv2.resize(frame, (frame_height, frame_width))
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
         weights = image_weights(frame)
         # Check before averaging
         if np.sum(weights) > 0:
             mean_brightness = np.average(frame, weights=weights)
         else:
             mean_brightness = np.mean(frame)  # Fallback to a normal average
-
-
-        mean_brightnesses.append(mean_brightness)
 
         # Handle synchronization
         next_frame_event.set() # tell presenter it can present the next frame
@@ -154,13 +153,13 @@ if __name__ == '__main__':
     show_patterns_process.start()
     capture_frames_process.start()
 
-    dual_image = output_queue.get().reshape((config.DUAL_GRID_SIZE, config.DUAL_GRID_SIZE))
+    dual_image = output_queue.get().reshape((config.DUAL_GRID_SIZE, config.DUAL_GRID_SIZE, 3))
 
     # Ensures the main program waits for the processes to finish before exiting
     show_patterns_process.join()
     capture_frames_process.join()
 
-    new_dual = scale_image(dual_image)
+    new_dual = normalize_image(dual_image)
     new_dual_image = second_normalize(new_dual)
     print("dual image:")
     print(new_dual)
