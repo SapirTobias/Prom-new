@@ -56,6 +56,7 @@ def image_weights(image):
     weights = np.exp(-dist ** 2 / (2 * sigma ** 2))
     return weights
 
+
 def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
 
     screen_width, screen_height = pyautogui.size()
@@ -88,8 +89,6 @@ def present_patterns(frame_ready_event, next_frame_event, stop_event, patterns):
         next_frame_event.clear() #  so at the next iteration it waits for the signal again
 
     cv2.destroyAllWindows()
-
-
 
 
 def film_frames(frame_ready_event, next_frame_event, stop_event, frame_height, frame_width, num_frames, queue, camera=0):
